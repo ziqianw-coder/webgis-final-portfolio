@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Hotel Distribution Around UMass Amherst</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.14.0/mapbox-gl.js"></script>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.14.0/mapbox-gl.css" rel="stylesheet">
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      color: #1f2937;
+    }
+
+    #map {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 100%;
+    }
+
+    .map-overlay {
+      position: absolute;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+      padding: 14px;
+      z-index: 1;
+    }
+
+    #title-box {
+      top: 20px;
+      left: 20px;
+      width: 330px;
+    }
+
+    #title-box h2 {
+      margin: 0 0 8px 0;
+      font-size: 21px;
+      color: #111827;
+    }
+
+    #title-box p {
+      margin: 0;
+      font-size: 13.5px;
+      line-height: 1.45;
+      color: #374151;
+    }
+
+    #filter-box {
+      top: 205px;
+      left: 20px;
+      width: 330px;
+    }
+
+    #filter-box h3 {
+      margin: 0 0 10px 0;
+      font-size: 16px;
+      color: #111827;
+    }
+
+    .filter-button {
+      display: inline-block;
+      margin: 4px 4px 4px 0;
+      padding: 7px 10px;
+      border: none;
+      border-radius: 6px;
+      background: #e5e7eb;
+      color: #111827;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .filter-button:hover {
+      background: #d1d5db;
+    }
+
+    .filter-button.active {
+      background: #2563eb;
+      color: white;
+    }
+
+    #legend {
+      bottom: 35px;
+      right: 20px;
+      width: 210px;
+    }
+
+    #legend h3 {
+      margin: 0 0 10px 0;
+      font-size: 16px;
+      color: #111827;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 7px;
+      font-size: 13px;
+    }
+
+    .legend-key {
+      display: inline-block;
+      border-radius: 50%;
+      width: 13px;
+      height: 13px;
+      margin-right: 8px;
+      border: 1.5px solid white;
+      box-shadow: 0 0 2px rgba(0, 0, 0, 0.35);
+    }
+
+    .mapboxgl-popup-content {
+      border-radius: 8px;
+      padding: 14px;
+      font-family: Arial, Helvetica, sans-serif;
+      max-width: 260px;
+    }
+
+    .mapboxgl-popup-content h3 {
+      margin: 0 0 8px 0;
+      color: #111827;
+      font-size: 17px;
+    }
+
+    .mapboxgl-popup-content p {
+      margin: 5px 0;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .popup-label {
+      font-weight: bold;
+      color: #374151;
+    }
+
+    @media (max-width: 700px) {
+      #title-box,
+      #filter-box {
+        width: 280px;
+        left: 10px;
+      }
+
+      #title-box {
+        top: 10px;
+      }
+
+      #filter-box {
+        top: 230px;
+      }
+
+      #legend {
+        right: 10px;
+        bottom: 25px;
+        width: 190px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="map"></div>
+
+  <div class="map-overlay" id="title-box">
+    <h2>Hotels Around UMass Amherst</h2>
+    <p>
+      This interactive Mapbox map shows selected hotel options near UMass Amherst.
+      Users can click each hotel for details and filter hotels by area.
+    </p>
+  </div>
+
+  <div class="map-overlay" id="filter-box">
+    <h3>Filter by Area</h3>
+    <button class="filter-button active" id="filter-all">All Hotels</button>
+    <button class="filter-button" id="filter-amherst">Amherst</button>
+    <button class="filter-button" id="filter-hadley">Hadley</button>
+  </div>
+
+  <div class="map-overlay" id="legend">
+    <h3>Legend</h3>
+    <div class="legend-item">
+      <span class="legend-key" style="background-color: #2563eb;"></span>
+      <span>Campus / Amherst Hotel</span>
+    </div>
+    <div class="legend-item">
+      <span class="legend-key" style="background-color: #f97316;"></span>
+      <span>Hadley Chain Hotel</span>
+    </div>
+    <div class="legend-item">
+      <span class="legend-key" style="background-color: #7c3aed;"></span>
+      <span>Regional Hotel</span>
+    </div>
+  </div>
+
+  <script>
+    mapboxgl.accessToken = 'pk.eyJ1IjoiemlxaWFudyIsImEiOiJjbW5udXhvMWEyMTQzMm9wcjZjNGgxZTF2In0.qWbZn03Nhi7q-UAoyXuCPw';
+
+    const hotels = {
+      "type": "FeatureCollection",
+      "features": [
+        {
+          "type": "Feature",
+          "properties": {
+            "name": "Hotel UMass",
+            "area": "Amherst",
+            "type": "Campus / Amherst Hotel",
+            "distance": "On campus",
+            "description": "A convenient hotel located directly on the UMass Amherst campus, useful for visitors attending university events."
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [-72.5272, 42.3919]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "name": "Courtyard by Marriott Hadley Amherst",
+            "area": "Hadley",
+            "type": "Hadley Chain Hotel",
+            "distance": "About 2.5 miles from UMass Amherst",
+            "description": "A chain hotel located along the commercial corridor between Hadley and Amherst."
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [-72.5390, 42.3620]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "name": "Hampton Inn Hadley-Amherst Area",
+            "area": "Hadley",
+            "type": "Regional Hotel",
+            "distance": "About 6 miles from UMass Amherst",
+            "description": "A regional hotel option located farther south in Hadley, with access to major roads and nearby services."
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [-72.6042, 42.3373]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "name": "Comfort Inn & Suites Hadley - Amherst",
+            "area": "Hadley",
+            "type": "Hadley Chain Hotel",
+            "distance": "About 3 miles from UMass Amherst",
+            "description": "A hotel located near shopping and service areas in Hadley, accessible by car from campus."
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [-72.5455, 42.3606]
+          }
+        }
+      ]
+    };
+
+    const map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/mapbox/light-v11',
+      center: [-72.555, 42.365],
+      zoom: 11.8
+    });
+
+    map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+    map.addControl(
+      new mapboxgl.ScaleControl({
+        maxWidth: 120,
+        unit: 'imperial'
+      }),
+      'bottom-left'
+    );
+
+    map.on('load', () => {
+      map.addSource('hotels', {
+        type: 'geojson',
+        data: hotels
+      });
+
+      map.addLayer({
+        id: 'hotel-points',
+        type: 'circle',
+        source: 'hotels',
+        paint: {
+          'circle-radius': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            10, 6,
+            13, 10
+          ],
+          'circle-color': [
+            'match',
+            ['get', 'type'],
+            'Campus / Amherst Hotel', '#2563eb',
+            'Hadley Chain Hotel', '#f97316',
+            'Regional Hotel', '#7c3aed',
+            '#6b7280'
+          ],
+          'circle-stroke-width': 2,
+          'circle-stroke-color': '#ffffff',
+          'circle-opacity': 0.92
+        }
+      });
+
+      map.addLayer({
+        id: 'hotel-labels',
+        type: 'symbol',
+        source: 'hotels',
+        layout: {
+          'text-field': ['get', 'name'],
+          'text-size': 12,
+          'text-offset': [0, 1.4],
+          'text-anchor': 'top'
+        },
+        paint: {
+          'text-color': '#111827',
+          'text-halo-color': '#ffffff',
+          'text-halo-width': 1.5
+        }
+      });
+
+      map.on('click', 'hotel-points', (e) => {
+        const props = e.features[0].properties;
+        const coordinates = e.features[0].geometry.coordinates.slice();
+
+        new mapboxgl.Popup()
+          .setLngLat(coordinates)
+          .setHTML(`
+            <h3>${props.name}</h3>
+            <p><span class="popup-label">Area:</span> ${props.area}</p>
+            <p><span class="popup-label">Hotel Type:</span> ${props.type}</p>
+            <p><span class="popup-label">Distance to UMass:</span> ${props.distance}</p>
+            <p><span class="popup-label">Description:</span> ${props.description}</p>
+          `)
+          .addTo(map);
+      });
+
+      map.on('mouseenter', 'hotel-points', () => {
+        map.getCanvas().style.cursor = 'pointer';
+      });
+
+      map.on('mouseleave', 'hotel-points', () => {
+        map.getCanvas().style.cursor = '';
+      });
+
+      map.fitBounds([
+        [-72.62, 42.33],
+        [-72.50, 42.40]
+      ], {
+        padding: 70
+      });
+
+      function setFilter(area) {
+        const buttons = document.querySelectorAll('.filter-button');
+        buttons.forEach(button => button.classList.remove('active'));
+
+        if (area === 'All') {
+          map.setFilter('hotel-points', null);
+          map.setFilter('hotel-labels', null);
+          document.getElementById('filter-all').classList.add('active');
+        } else {
+          map.setFilter('hotel-points', ['==', ['get', 'area'], area]);
+          map.setFilter('hotel-labels', ['==', ['get', 'area'], area]);
+
+          if (area === 'Amherst') {
+            document.getElementById('filter-amherst').classList.add('active');
+          }
+
+          if (area === 'Hadley') {
+            document.getElementById('filter-hadley').classList.add('active');
+          }
+        }
+      }
+
+      document.getElementById('filter-all').addEventListener('click', () => {
+        setFilter('All');
+      });
+
+      document.getElementById('filter-amherst').addEventListener('click', () => {
+        setFilter('Amherst');
+      });
+
+      document.getElementById('filter-hadley').addEventListener('click', () => {
+        setFilter('Hadley');
+      });
+    });
+  </script>
+</body>
+</html>
